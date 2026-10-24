@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Реестр заявок CRM — OBSIDIAN ATELIER</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23e5a93c'/><text x='50%' y='65%' font-family='sans-serif' font-size='55' font-weight='900' fill='%23000' text-anchor='middle'>O</text></svg>">
+  <style>
+    body {
+      background: #08090b;
+      min-height: 100vh;
+      padding: 30px 0 60px 0;
+    }
+    .leads-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .stats-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .stat-label {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      color: var(--silver-muted);
+    }
+    .stat-num {
+      font-size: 1.7rem;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      color: #fff;
+    }
+    .filter-controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .search-input-box {
+      flex: 1;
+      min-width: 260px;
+      position: relative;
+    }
+    .search-input-box input {
+      width: 100%;
+      padding: 12px 18px 12px 42px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-size: 0.9rem;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--silver-muted);
+    }
+    .filter-btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--silver-muted);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .filter-pill:hover, .filter-pill.active {
+      background: rgba(229, 169, 60, 0.15);
+      border-color: var(--accent-gold);
+      color: #fff;
+    }
+    .leads-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: var(--shadow-lg);
+    }
+    table.leads-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+    table.leads-table th {
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--silver-muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    table.leads-table td {
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #d1d5db;
+      vertical-align: middle;
+    }
+    table.leads-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .lead-order-tag {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent-gold-light);
+      background: rgba(229, 169, 60, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(229, 169, 60, 0.2);
+      white-space: nowrap;
+    }
+    .client-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .client-name {
+      font-weight: 700;
+      color: #fff;
+    }
+    .client-phone {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--silver-muted);
+      white-space: nowrap;
+    }
+    .status-select {
+      background: #12151d;
+      border: 1px solid var(--border-subtle);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .action-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-icon-del {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: var(--transition);
+    }
+    .btn-icon-del:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+    @media (min-width: 1800px) {
+      table.leads-table th, table.leads-table td {
+        padding: 20px 24px;
+        font-size: 1rem;
+      }
+      .stat-num {
+        font-size: 2.2rem;
+      }
+      .stat-label {
+        font-size: 0.82rem;
+      }
+    }
+    @media (max-width: 900px) {
+      .stats-cards-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 600px) {
+      .stats-cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Шапка страницы реестра -->
+    <div class="leads-header-bar">
+      <div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="logo-icon" style="width: 32px; height: 32px; font-size: 0.9rem;">O</div>
+          <h1 style="font-family: var(--font-heading); font-size: 1.5rem; color: #fff;">
+            Реестр заявок <span style="color: var(--accent-gold);">OBSIDIAN ATELIER</span>
+          </h1>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--silver-muted); margin-top: 4px;">
+          База данных: SQLite (`obsidian_leads.db`) • Синхронизировано
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <a href="/" class="btn btn-outline btn-sm">← Главный сайт</a>
+        <button onclick="exportToCsv()" class="btn btn-outline btn-sm">Экспорт CSV 📥</button>
+        <button onclick="fetchLeads()" class="btn btn-primary btn-sm">Обновить ↻</button>
+        <button onclick="logoutAdmin()" class="btn btn-outline btn-sm" style="color: #f87171; border-color: rgba(239,68,68,0.4);" title="Завершить сеанс">Выйти 🚪</button>
+      </div>
+    </div>
+
+    <!-- Метрики и статистика -->
+    <div class="stats-cards-grid">
+      <div class="stat-box">
+        <span class="stat-label">Всего обращений</span>
+        <span class="stat-num" id="stat-total">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Новые лиды</span>
+        <span class="stat-num" id="stat-new" style="color: #60a5fa;">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">В работе / Назначен визит</span>
+        <span class="stat-num" id="stat-progress" style="color: var(--accent-gold-light);">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Подтверждено / В боксе</span>
+        <span class="stat-num" id="stat-confirmed" style="color: var(--emerald);">0</span>
+      </div>
+    </div>
+
+    <!-- Фильтры и поиск -->
+    <div class="filter-controls-row">
+      <div class="search-input-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="leads-search-input" placeholder="Поиск по имени, марке авто или телефону..." oninput="filterLeads()">
+      </div>
+
+      <div class="filter-btn-group">
+        <button class="filter-pill active" data-status="all" onclick="setStatusFilter('all')">Все</button>
+        <button class="filter-pill" data-status="new" onclick="setStatusFilter('new')">Новые</button>
+        <button class="filter-pill" data-status="in_progress" onclick="setStatusFilter('in_progress')">В работе</button>
+        <button class="filter-pill" data-status="confirmed" onclick="setStatusFilter('confirmed')">Подтвержденные</button>
+      </div>
+    </div>
+
+    <!-- Таблица заявок -->
+    <div class="leads-table-container">
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Заказ</th>
+            <th>Дата создания</th>
+            <th>Клиент</th>
+            <th>Автомобиль</th>
+            <th>Пакет / Комплекс</th>
+            <th>Смета / Бонус</th>
+            <th>Статус</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="leads-table-body">
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 40px; color: var(--silver-muted);">
+              Загрузка реестра заявок из базы данных...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let allLeads = [];
+    let currentStatusFilter = 'all';
+
+    async function logoutAdmin() {
+      if (!confirm('Выйти из системы управления?')) return;
+      try {
+        await fetch('/api/admin/logout', { method: 'POST' });
+      } catch (e) {}
+      window.location.href = '/admin';
+    }
+
+    async function fetchLeads() {
+      try {
+        const res = await fetch('/api/leads');
+        if (res.status === 401) {
+          window.location.href = '/admin';
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          allLeads = data.data;
+          updateStats();
+          filterLeads();
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки лидов:', err);
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').textContent = allLeads.length;
+      document.getElementById('stat-new').textContent = allLeads.filter(l => l.status === 'new').length;
+      document.getElementById('stat-progress').textContent = allLeads.filter(l => l.status === 'in_progress').length;
+      document.getElementById('stat-confirmed').textContent = allLeads.filter(l => l.status === 'confirmed').length;
+    }
+
+    function setStatusFilter(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+      });
+      filterLeads();
+    }
+
+    function filterLeads() {
+      const query = document.getElementById('leads-search-input').value.toLowerCase().trim();
+      const tbody = document.getElementById('leads-table-body');
+
+      let filtered = allLeads.filter(item => {
+        const matchesStatus = (currentStatusFilter === 'all') || (item.status === currentStatusFilter);
+        const matchesQuery = !query || 
+          (item.client_name && item.client_name.toLowerCase().includes(query)) ||
+          (item.client_phone && item.client_phone.toLowerCase().includes(query)) ||
+          (item.car_model && item.car_model.toLowerCase().includes(query)) ||
+          (item.service_package && item.service_package.toLowerCase().includes(query));
+        return matchesStatus && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 40px; color: var(--silver-muted);">
+              Заявок по заданному критерию не найдено.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(lead => {
+        const orderNum = `OBS-${String(lead.id).padStart(4, '0')}`;
+        let optionsList = '';
+        try {
+          const parsed = JSON.parse(lead.selected_options || '[]');
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            optionsList = `<div style="font-size: 0.72rem; color: var(--silver-muted); margin-top: 4px;">+ ${parsed.join(', ')}</div>`;
+          }
+        } catch(e) {}
+
+        const visitInfo = lead.visit_date 
+          ? `<div style="font-size: 0.75rem; color: var(--accent-gold); margin-top: 3px;">📅 ${lead.visit_date} ${lead.visit_time || ''}</div>` 
+          : '';
+
+        return `
+          <tr id="lead-row-${lead.id}">
+            <td>
+              <span class="lead-order-tag">${orderNum}</span>
+              <div style="font-size: 0.68rem; color: var(--silver-muted); margin-top: 4px;">${lead.source_type}</div>
+            </td>
+            <td>
+              <div style="font-family: var(--font-mono); font-size: 0.78rem;">${lead.created_at || '—'}</div>
+              ${visitInfo}
+            </td>
+            <td>
+              <div class="client-cell">
+                <span class="client-name">${escapeHtml(lead.client_name)}</span>
+                <a href="tel:${escapeHtml(lead.client_phone)}" class="client-phone">${escapeHtml(lead.client_phone)}</a>
+              </div>
+            </td>
+            <td>
+              <strong style="color: #fff;">${escapeHtml(lead.car_model || '—')}</strong>
+              <div style="font-size: 0.75rem; color: var(--silver-muted);">${escapeHtml(lead.car_condition || '')}</div>
+            </td>
+            <td>
+              <div style="color: var(--silver-light); font-weight: 600;">${escapeHtml(lead.service_package || '—')}</div>
+              ${optionsList}
+            </td>
+            <td>
+              <strong style="font-family: var(--font-mono); color: var(--accent-gold-light);">${escapeHtml(lead.estimated_price || '—')}</strong>
+              <div style="font-size: 0.7rem; color: var(--emerald);">${escapeHtml(lead.discount_promo || '')}</div>
+            </td>
+            <td>
+              <select class="status-select" onchange="updateLeadStatus(${lead.id}, this.value)">
+                <option value="new" ${lead.status === 'new' ? 'selected' : ''}>Новая</option>
+                <option value="in_progress" ${lead.status === 'in_progress' ? 'selected' : ''}>В работе</option>
+                <option value="confirmed" ${lead.status === 'confirmed' ? 'selected' : ''}>Подтверждена</option>
+                <option value="completed" ${lead.status === 'completed' ? 'selected' : ''}>Завершена</option>
+              </select>
+            </td>
+            <td>
+              <div class="action-btn-group">
+                <a href="tel:${escapeHtml(lead.client_phone)}" class="btn btn-outline btn-sm" style="padding: 5px 10px; font-size: 0.75rem;" title="Позвонить">
+                  📞
+                </a>
+                <button onclick="deleteLead(${lead.id})" class="btn-icon-del" title="Удалить заявку">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function updateLeadStatus(id, newStatus) {
+      try {
+        const res = await fetch(`/api/leads/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const lead = allLeads.find(l => l.id === id);
+          if (lead) lead.status = newStatus;
+          updateStats();
+        }
+      } catch (err) {
+        console.error('Ошибка обновления статуса:', err);
+      }
+    }
+
+    async function deleteLead(id) {
+      if (!confirm(`Удалить заказ OBS-${String(id).padStart(4, '0')} из реестра?`)) return;
+
+      try {
+        const res = await fetch(`/api/leads/${id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          allLeads = allLeads.filter(l => l.id !== id);
+          updateStats();
+          filterLeads();
+        }
+      } catch (err) {
+        console.error('Ошибка удаления:', err);
+      }
+    }
+
+    function exportToCsv() {
+      if (allLeads.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+
+      const headers = ['ID', 'Дата', 'Источник', 'Клиент', 'Телефон', 'Авто', 'Пакет', 'Смета', 'Статус'];
+      const rows = allLeads.map(l => [
+        `OBS-${String(l.id).padStart(4, '0')}`,
+        `"${l.created_at}"`,
+        `"${l.source_type}"`,
+        `"${l.client_name}"`,
+        `"${l.client_phone}"`,
+        `"${l.car_model}"`,
+        `"${l.service_package}"`,
+        `"${l.estimated_price}"`,
+        `"${l.status}"`
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + 
+        [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `obsidian_leads_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchLeads);
+  </script>
+</body>
+</html>
