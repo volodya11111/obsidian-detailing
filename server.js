@@ -111,6 +111,34 @@ if (countRow.count === 0) {
   );
 }
 
+// Функция получения времени в часовом поясе Новосибирска (Asia/Novosibirsk, UTC+7)
+function getNovosibirskDateTime() {
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('ru-RU', {
+      timeZone: 'Asia/Novosibirsk',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(now);
+    const p = {};
+    for (const part of parts) {
+      p[part.type] = part.value;
+    }
+    return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`;
+  } catch (err) {
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const nskTime = new Date(utc + (7 * 3600000));
+    return nskTime.toISOString().replace('T', ' ').slice(0, 19);
+  }
+}
+
 // API: Сохранение новой заявки
 app.post('/api/leads', (req, res) => {
   try {
@@ -118,6 +146,8 @@ app.post('/api/leads', (req, res) => {
       source_type = 'quick_form',
       client_name,
       client_phone,
+      client_time,
+      client_tz,
       car_model = 'Премиум автомобиль',
       car_condition = 'Не указано',
       service_package = 'Индивидуальный расчет',
@@ -136,19 +166,26 @@ app.post('/api/leads', (req, res) => {
       });
     }
 
+    // Время создания: считывается с устройства клиента, при отсутствии/сбое — по умолчанию Новосибирск (UTC+7)
+    let createdAt = getNovosibirskDateTime();
+    if (client_time && typeof client_time === 'string' && client_time.trim().length >= 16) {
+      createdAt = client_time.trim();
+    }
+
     const optionsStr = typeof selected_options === 'string'
       ? selected_options
       : JSON.stringify(selected_options);
 
     const insertStmt = db.prepare(`
       INSERT INTO leads (
-        source_type, client_name, client_phone, car_model, car_condition,
+        created_at, source_type, client_name, client_phone, car_model, car_condition,
         service_package, selected_options, estimated_price, discount_promo,
         visit_date, visit_time, comments, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')
     `);
 
     const result = insertStmt.run(
+      createdAt,
       source_type,
       String(client_name).trim(),
       String(client_phone).trim(),

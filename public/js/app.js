@@ -10,8 +10,33 @@ document.addEventListener('DOMContentLoaded', () => {
   initFaqAccordion();
   initBookingForms();
   initGlowCards();
-  loadLeadsCounter();
 });
+
+// Функция считывания времени с устройства клиента с fallback на Новосибирское время (UTC+7)
+function getDeviceTimestamp() {
+  try {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const localTimeStr = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+    let tz = 'Asia/Novosibirsk';
+    try {
+      tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Novosibirsk';
+    } catch (e) {}
+
+    return {
+      client_time: localTimeStr,
+      client_tz: tz
+    };
+  } catch (err) {
+    return { client_time: null, client_tz: 'Asia/Novosibirsk' };
+  }
+}
 
 /* ==========================================================================
    1. ИНТЕРАКТИВНЫЙ СЛАЙДЕР «ДО / ПОСЛЕ» (РЕФАКТОРИНГ: БЕЗ ИСКАЖЕНИЙ)
@@ -214,10 +239,13 @@ function initQuizCalculator() {
     submitBtn.innerHTML = '<span>Фиксация в реестре...</span>';
     submitBtn.disabled = true;
 
+    const deviceTime = getDeviceTimestamp();
     const payload = {
       source_type: 'quiz_calculator',
       client_name: nameInput.value.trim(),
       client_phone: phoneInput.value.trim(),
+      client_time: deviceTime.client_time,
+      client_tz: deviceTime.client_tz,
       car_model: modelInput.value.trim() || quizState.carClassName,
       car_condition: quizState.conditionName,
       service_package: quizState.packageName,
@@ -247,7 +275,6 @@ function initQuizCalculator() {
         quizForm.reset();
         currentStep = 1;
         renderStep(1);
-        loadLeadsCounter();
       } else {
         showToast(resData.error || 'Ошибка при отправке', true);
       }
@@ -341,10 +368,13 @@ function initBookingForms() {
     submitBtn.innerHTML = '<span>Бронирование бокса...</span>';
     submitBtn.disabled = true;
 
+    const deviceTime = getDeviceTimestamp();
     const payload = {
       source_type: 'direct_booking',
       client_name: name,
       client_phone: phone,
+      client_time: deviceTime.client_time,
+      client_tz: deviceTime.client_tz,
       car_model: car,
       service_package: serviceSelect,
       visit_date: selectedDate,
@@ -370,7 +400,6 @@ function initBookingForms() {
           bonus: 'Приоритетный въезд'
         });
         bookingForm.reset();
-        loadLeadsCounter();
       } else {
         showToast(data.error || 'Ошибка бронирования', true);
       }

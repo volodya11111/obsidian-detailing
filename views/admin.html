@@ -222,7 +222,7 @@
           </h1>
         </div>
         <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--silver-muted); margin-top: 4px;">
-          База данных: SQLite (`obsidian_leads.db`) • Синхронизировано
+          База данных: SQLite • Часовой пояс: <span id="admin-tz-badge" style="color: var(--accent-gold); font-weight: 600;">Новосибирск (НСК, UTC+7)</span>
         </div>
       </div>
 
@@ -386,7 +386,7 @@
               <div style="font-size: 0.68rem; color: var(--silver-muted); margin-top: 4px;">${lead.source_type}</div>
             </td>
             <td>
-              <div style="font-family: var(--font-mono); font-size: 0.78rem;">${lead.created_at || '—'}</div>
+              <div style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; color: #fff;">${formatLeadDateTime(lead.created_at)}</div>
               ${visitInfo}
             </td>
             <td>
@@ -497,6 +497,11 @@
       document.body.removeChild(link);
     }
 
+    function formatLeadDateTime(rawDate) {
+      if (!rawDate) return '—';
+      return escapeHtml(rawDate);
+    }
+
     function escapeHtml(text) {
       if (!text) return '';
       return String(text).replace(/[&<>"']/g, function(m) {
@@ -504,7 +509,16 @@
       });
     }
 
-    document.addEventListener('DOMContentLoaded', fetchLeads);
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const badge = document.getElementById('admin-tz-badge');
+        if (badge && tz) {
+          badge.textContent = `${tz} / Новосибирск (UTC+7)`;
+        }
+      } catch (e) {}
+      fetchLeads();
+    });
   </script>
 </body>
 </html>
